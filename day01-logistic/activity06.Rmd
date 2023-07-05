@@ -6,3 +6,143 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+```
+
+```{r}
+resume <- read_csv("https://www.openintro.org/data/csv/resume.csv")
+```
+
+1. This is an observational study because none of the variables are controlled.
+
+2. The variable received callback is a dummy variable where 0 indicates they didn't get a callback and 1 indicates they did.
+
+3.
+
+```{r}
+resume_plot <- resume
+```
+
+```{r}
+resume_plot$received_callback[resume$received_callback == 0] <- 'No'
+
+resume_plot$received_callback[resume$received_callback == 1] <- 'Yes'
+```
+
+
+```{r}
+resume_plot %>% 
+  ggplot(mapping = aes(x = received_callback))+
+  geom_bar()+
+  labs(title = "Callback vs. No Callback for Jobs", 
+       x = "",
+       y = "Number of callback")
+```
+
+4.
+
+```{r}
+
+resume_plot %>% 
+  count(received_callback) %>% 
+  mutate(percent = 100 * prop.table(n))
+```
+
+5. It is way more likely that someone will not get a callback for a job than they will.
+
+6. The probability that a random person will receive a callback is about 8%.
+
+7. 
+
+```{r}
+
+odds <-  0.08 /(1 - 0.08)
+
+odds
+```
+
+The odds that a random person will get a call back is around 9%.
+
+
+| received_callback | Black        | White        |
+|:------------------|:-------------|:-------------|
+| No                | 93.55 (2278) | 90.35 (2200) |
+| Yes               | 6.45 (157)   | 9.65 (235)   |
+
+6. The probability that a black person will get a call back is 
+
+```{r}
+
+prob_black <- 157 / (2278 + 2200+ 235)
+
+prob_black
+
+```
+
+```{r}
+
+odds_black <- 0.03 / (1 - 0.03)
+
+odds_black
+
+```
+
+```{r}
+
+  # The {tidymodels} method for logistic regression requires that the response be a factor variable
+  resume <- resume %>% 
+    mutate(received_callback = as.factor(received_callback))
+
+  resume_mod <- logistic_reg() %>%
+    set_engine("glm") %>%
+    fit(received_callback ~ race, data = resume, family = "binomial")
+
+  tidy(resume_mod) %>% 
+    knitr::kable(digits = 3)
+
+```
+
+8. 
+$$
+callbackwhite = -2.675 + 0.438 \times racewhite 
+$$
+
+9.
+
+$$
+callbackblack = -2.67
+$$
+
+10. The Log odd for a black person to be called back is
+
+```{r}
+log_odds_black <- log(0.03092784)
+
+log_odds_black
+```
+
+11.
+
+The log odds are the log of the odds. In order to get them back we would take the natural log of it.
+
+```{r}
+black_odds_check <- exp(log_odds_black)
+
+black_odds_check
+```
+
+12.
+
+```{r}
+
+log_prob_black <- (black_odds_check) / (1 + black_odds_check)
+
+log_prob_black
+
+```
+
+There is a 3% chance of a percieved black person being called back. This is the same as the probability I got above but it seems to have been rounded off.

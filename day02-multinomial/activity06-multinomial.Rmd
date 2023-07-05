@@ -59,8 +59,73 @@ voters <- voters %>%
 ```{r}
 
 voters %>% 
-  ggplot(aes(x= educ, y = party, fill = voter_category ))+
-  geom_bar(postion = "stack", stat = )
+  ggplot(aes(y= educ, fill= voter_category))+
+  geom_bar(position = "fill")
 
 ```
 
+```{r}
+
+voters %>% 
+  ggplot(aes(y= party, fill= voter_category))+
+  geom_bar(position = "fill")
+
+```
+
+
+```{r}
+multi_mod <- multinom_reg() %>% 
+  set_engine("nnet") %>% 
+  fit(voter_category ~ ppage + educ + race + sex + income_cat, data = voters)
+
+tidy(multi_mod) %>% 
+  print(n = Inf) # This will display all rows of the tibble
+
+multi_mod <- repair_call(multi_mod, data = voters)
+```
+
+$$
+always = 1.854 + 0.061 \times ppage + -1.353 \times educHigh scool or less + \\
+-0.412 \times educSome college + -0/.417 \times raceHispanic + \\
+-0.683  \times raceOther/Mixed + 0.039 \times raceWhite + \\
+0.211 \times sexMale + 0.067 \times income_cat40-75k + \\
+0.147 \times income_cat75-125k + -0.756 \times income_catLess than 40k
+$$
+
+```{r}
+voter_aug <- augment(multi_mod, new_data = voters)
+
+voter_aug
+
+voter_aug %>% 
+  select(contains("pred"))
+```
+
+```{r}
+voter_conf_mat <- voter_aug %>% 
+  count(voter_category, .pred_class, .drop = FALSE)
+
+voter_conf_mat %>% 
+  pivot_wider(
+    names_from = .pred_class,
+    values_from = n
+  )
+```
+
+```{r}
+voters %>% 
+  ggplot(aes(x = voter_category)) +
+  geom_bar() +
+  labs(
+    main = "Self-reported voter category"
+    )
+
+voter_conf_mat %>% 
+  ggplot(aes(x = voter_category, y = n, fill = .pred_class)) +
+  geom_bar(stat = "identity") +
+  labs(
+    main = "Predicted vs self-reported voter category"
+    )
+```
+
+5. The model predicts that people are sporadic voters the most. It also correctly identifies people who consider themselves sporadic voters the best. It greatly under predicts people who consider themselves rare/never voters. 

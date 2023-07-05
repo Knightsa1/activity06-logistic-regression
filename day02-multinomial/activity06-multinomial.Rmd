@@ -6,3 +6,61 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+```{r}
+
+library(tidyverse)
+library(tidymodels)
+
+```
+
+
+```{r}
+data <- read_csv("https://raw.githubusercontent.com/fivethirtyeight/data/master/non-voters/nonvoters_data.csv")
+```
+
+```{r selecting_variables_needed}
+
+voters <- data %>% 
+  select(c("ppage","educ", "race","gender", "income_cat", "Q30", "voter_category"))
+```
+
+```{r rename_gender_to_sex}
+
+names(voters)[names(voters) == "gender"] <- "sex"
+
+```
+
+1. If they chose people who had been able to four at least 4 election cycles they would be able to establish a pattern on whether or not individuals actually had a history of voting.
+
+2. There doesn't seem to be a large difference between races and how often they vote. Although it does seem that it does seem that Hispanic and Other/Mixed are more likely to vote than black and white. When it come to age it seems that the older someone is the more likely they are to vote. They are also more likely to always vote exept for a dip in 35-49.
+
+
+```{r changing_to_party_name}
+voters <- voters %>%
+  mutate(party = case_when(
+    Q30 == 1 ~ "Republican",
+    Q30 == 2 ~ "Democrat",
+    Q30 == 3 ~ "Independent",    
+    Q30 == 4 ~ "Other",
+    Q30 == 5 ~ "Other",
+    Q30 == -1 ~ "Other"
+  ))
+```
+
+```{r creating_factor_for_voter_category}
+
+voters <- voters %>% 
+  mutate(voter_category = factor(voter_category, levels = c("rarely/never",
+                                                            "sporadic",
+                                                            "always")))
+```
+
+```{r}
+
+voters %>% 
+  ggplot(aes(x= educ, y = party, fill = voter_category ))+
+  geom_bar(postion = "stack", stat = )
+
+```
+
